@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
 const AuthContext = createContext();
@@ -80,6 +80,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const googleLogin = async (credential) => {
+    setLoading(true);
+    setAuthError('');
+    try {
+      const res = await api.googleAuth(credential);
+      setUser(res.user);
+      if (res.access) {
+        localStorage.setItem('aberdares_access_token', res.access);
+      }
+      if (res.refresh) {
+        localStorage.setItem('aberdares_refresh_token', res.refresh);
+      }
+      localStorage.setItem('aberdares_user', JSON.stringify(res.user));
+      setIsAuthModalOpen(false);
+      return res.user;
+    } catch (err) {
+      setAuthError(err.message || 'Google sign-in failed.');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await api.logout();
@@ -117,6 +140,7 @@ export const AuthProvider = ({ children }) => {
         openRegister,
         login,
         register,
+        googleLogin,
         logout,
         loading,
         authError,

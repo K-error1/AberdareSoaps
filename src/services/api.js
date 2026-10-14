@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Aberdares E-Commerce Backend API Client
  * Configured for http://localhost:8001
  */
@@ -83,6 +83,7 @@ export const api = {
   // Auth
   register: (payload) => request('/auth/register/', { method: 'POST', body: JSON.stringify(payload) }),
   login: (payload) => request('/auth/login/', { method: 'POST', body: JSON.stringify(payload) }),
+  googleAuth: (credential) => request('/auth/google/', { method: 'POST', body: JSON.stringify({ credential }) }),
   logout: () => request('/auth/logout/', { method: 'POST' }),
   getMe: () => request('/auth/me/'),
   requestPasswordReset: (email) => request('/auth/password-reset/request/', { method: 'POST', body: JSON.stringify({ email }) }),

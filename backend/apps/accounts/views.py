@@ -1,5 +1,6 @@
-﻿import secrets
+import secrets
 import hashlib
+import requests
 from datetime import timedelta
 from django.utils import timezone
 from django.contrib.auth import authenticate
@@ -85,6 +86,68 @@ class LoginView(views.APIView):
             'access': str(refresh.access_token),
             'refresh': str(refresh)
         })
+        set_jwt_cookies(res, refresh.access_token, refresh)
+        return res
+
+class GoogleAuthView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        credential = request.data.get('credential')
+        if not credential:
+            return Response(
+                {'error': {'code': 'CREDENTIAL_REQUIRED', 'message': 'Google credential token is required.', 'details': {}}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Verify ID token with Google's public tokeninfo endpoint
+        try:
+            google_res = requests.get(
+                'https://oauth2.googleapis.com/tokeninfo',
+                params={'id_token': credential},
+                timeout=10
+            )
+        except Exception as e:
+            return Response(
+                {'error': {'code': 'GOOGLE_SERVICE_ERROR', 'message': f'Failed to reach Google OAuth: {str(e)}', 'details': {}}},
+                status=status.HTTP_502_BAD_GATEWAY
+            )
+
+        if google_res.status_code != 200:
+            return Response(
+                {'error': {'code': 'INVALID_TOKEN', 'message': 'Invalid or expired Google token.', 'details': {}}},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        token_info = google_res.json()
+        email = token_info.get('email')
+        if not email:
+            return Response(
+                {'error': {'code': 'NO_EMAIL', 'message': 'Google account must have an email associated.', 'details': {}}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        name = token_info.get('name') or email.split('@')[0]
+
+        # Find or create user
+        user, created = User.objects.get_or_create(
+            email=email.lower(),
+            defaults={
+                'name': name,
+                'role': User.Role.CUSTOMER,
+            }
+        )
+        if created:
+            user.set_unusable_password()
+            user.save()
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        res = Response({
+            'user': UserSerializer(user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh)
+        }, status=status.HTTP_200_OK)
         set_jwt_cookies(res, refresh.access_token, refresh)
         return res
 
