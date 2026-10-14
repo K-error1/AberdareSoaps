@@ -1,4 +1,4 @@
-﻿FROM python:3.12-slim
+FROM python:3.12-slim
 
 # Prevent Python from writing .pyc and buffer stdin/stdout
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -21,6 +21,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy project files
 COPY . /app/
 
-EXPOSE 8000
+# Production startup: collect static files, run migrations, seed initial data, start gunicorn
+CMD sh -c "python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py seed_demo && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2"
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
