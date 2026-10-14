@@ -1,0 +1,70 @@
+﻿name: aberdares-backend
+
+services:
+  aberdares_db:
+    image: postgres:16-alpine
+    container_name: aberdares_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: aberdares_db
+      POSTGRES_USER: aberdares_user
+      POSTGRES_PASSWORD: aberdares_password
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-5433}:5432"
+    volumes:
+      - aberdares_pgdata:/var/lib/postgresql/data
+    networks:
+      - aberdares_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aberdares_user -d aberdares_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  aberdares_web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: aberdares-backend:dev
+    container_name: aberdares_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://aberdares_user:aberdares_password@aberdares_db:5432/aberdares_db
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-8001}:8000"
+    volumes:
+      - .:/app
+    networks:
+      - aberdares_net
+    depends_on:
+      aberdares_db:
+        condition: service_healthy
+    command: python manage.py runserver 0.0.0.0:8000
+
+  aberdares_worker:
+    image: aberdares-backend:dev
+    container_name: aberdares_worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://aberdares_user:aberdares_password@aberdares_db:5432/aberdares_db
+    volumes:
+      - .:/app
+    networks:
+      - aberdares_net
+    depends_on:
+      aberdares_db:
+        condition: service_healthy
+    command: python manage.py qcluster
+
+volumes:
+  aberdares_pgdata:
+    name: aberdares_pgdata
+
+networks:
+  aberdares_net:
+    name: aberdares_net
+    driver: bridge

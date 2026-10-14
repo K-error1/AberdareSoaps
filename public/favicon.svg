@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="16" fill="#1a4d36" />
+  <!-- Stylized Mountain & Leaf Icon -->
+  <path d="M12 44L26 22L36 34L42 26L52 44H12Z" fill="#2e7d56" opacity="0.6"/>
+  <path d="M22 44L34 26L46 44H22Z" fill="#74c69d" />
+  <path d="M32 20C32 20 44 26 44 38C44 42 40 46 34 46C28 46 26 40 26 40C26 40 28 32 32 20Z" fill="#d9534f" opacity="0.85"/>
+  <circle cx="32" cy="18" r="3" fill="#ffffff"/>
+</svg>
