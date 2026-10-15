@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, Lock, Mail, User, Phone, ArrowRight, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -125,7 +125,7 @@ export const AuthModal = () => {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      placeholder="e.g. Jane Wambui"
+                      placeholder="Your Full Name"
                       className="w-full pl-9 pr-3 py-2.5 text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                     <User size={15} className="absolute left-3 top-3 text-stone-400" />

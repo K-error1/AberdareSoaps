@@ -62,7 +62,7 @@ export const CartDrawer = ({ setActivePage }) => {
         className="absolute inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-fadeIn"
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div className="fixed inset-y-0 right-0 max-w-full flex pl-0 sm:pl-10">
         <div className="w-screen max-w-md bg-white shadow-2xl flex flex-col animate-slideLeft">
           
           {/* Drawer Header */}

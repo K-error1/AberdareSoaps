@@ -25,25 +25,7 @@ export const CartProvider = ({ children }) => {
   const [orders, setOrders] = useState(() => {
     try {
       const saved = localStorage.getItem('aberdares_orders');
-      return saved ? JSON.parse(saved) : [
-        {
-          id: "ABS-7421",
-          date: "Sep 4, 2026",
-          status: "Out for Delivery",
-          statusCode: "out_for_delivery",
-          items: [
-            { name: "Batian Multipurpose Bar Soap", size: "250g", quantity: 3, price: 180 },
-            { name: "Lisa Lux Highland Aloe & Hibiscus Beauty Bar", size: "200g", quantity: 2, price: 160 }
-          ],
-          total: 860,
-          customerName: "Kamau Njoroge",
-          phone: "+254 722 345 678",
-          deliveryMethod: "Nairobi / Kiambu Doorstep Express",
-          deliveryAddress: "Kasarani, Thika Road, Nairobi",
-          paymentMethod: "M-Pesa STK Push (Paid)",
-          mpesaRef: "SJE99X4LM1"
-        }
-      ];
+      return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
@@ -68,9 +50,9 @@ export const CartProvider = ({ children }) => {
   const [greenPoints, setGreenPoints] = useState(() => {
     try {
       const saved = localStorage.getItem('aberdares_points');
-      return saved ? parseInt(saved, 10) : 120;
+      return saved ? parseInt(saved, 10) : 0;
     } catch {
-      return 120;
+      return 0;
     }
   });
 

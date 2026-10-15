@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
   Sparkles, 
@@ -12,16 +12,60 @@ import {
   ChevronRight,
   Maximize2
 } from 'lucide-react';
-import { products, flagshipLines } from '../data/products';
+import { products as fallbackProducts, flagshipLines } from '../data/products';
 import { barSoapSizes } from '../data/barSoapSizes';
 import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
+import { api } from '../services/api';
 
 export const HomePage = ({ setActivePage, onCategorySelect }) => {
   const { setIsWholesaleModalOpen } = useCart();
+  const [liveProducts, setLiveProducts] = useState(() =>
+    fallbackProducts.filter(p => p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0))
+  );
 
-  // Pick top flagship and bestsellers
-  const featuredProducts = products.filter(p => p.isFlagship || p.rating >= 4.9).slice(0, 6);
+  useEffect(() => {
+    let isMounted = true;
+    api.getProducts()
+      .then(data => {
+        if (!isMounted) return;
+        const raw = data.results || (Array.isArray(data) ? data : []);
+        if (raw.length > 0) {
+          const formatted = raw
+            .filter(p => (p.inStock !== false && p.in_stock !== false) && (p.stockQuantity === undefined || p.stockQuantity > 0) && (p.stock_quantity === undefined || p.stock_quantity > 0))
+            .map(p => ({
+              id: p.slug || p.id,
+              slug: p.slug,
+              name: p.name,
+              brandLine: p.brandLine || p.brand_line || 'Batian',
+              category: typeof p.category === 'object' ? p.category?.slug : (p.category || 'bar-soaps'),
+              badge: p.badge || '',
+              isFlagship: p.isFlagship !== undefined ? p.isFlagship : (p.is_flagship || false),
+              basePrice: Number(p.basePrice || p.base_price || 0),
+              defaultSize: p.defaultSize || p.default_size || 'Standard',
+              shortDescription: p.shortDescription || p.short_description || '',
+              fullDescription: p.fullDescription || p.full_description || '',
+              ingredients: p.ingredients || '',
+              ecoScore: p.ecoScore || p.eco_score || 'A+',
+              inStock: true,
+              stockQuantity: Number(p.stockQuantity ?? p.stock_quantity ?? 100),
+              rating: Number(p.rating || 4.8),
+              reviewsCount: Number(p.reviewsCount || p.reviews_count || 45),
+              image: p.image || '',
+              sizes: Array.isArray(p.sizes) ? p.sizes : [],
+              benefits: Array.isArray(p.benefits) ? p.benefits : []
+            }));
+          setLiveProducts(formatted);
+        }
+      })
+      .catch(err => {
+        console.warn('HomePage catalog fallback:', err);
+      });
+    return () => { isMounted = false; };
+  }, []);
+
+  // Pick top flagship and bestsellers from live products (excludes depleted ones)
+  const featuredProducts = liveProducts.filter(p => p.isFlagship || p.rating >= 4.9).slice(0, 6);
 
   const handleShopClick = (catId = 'all') => {
     setActivePage('products');
@@ -52,22 +96,22 @@ export const HomePage = ({ setActivePage, onCategorySelect }) => {
                 <span>Authentically Kenyan • Ruiru, Kimbo</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
                 Nature Meets <br className="hidden sm:inline" />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-amber-200">
                   Innovation
                 </span>
               </h1>
 
-              <p className="text-base sm:text-lg text-stone-300 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
+              <p className="text-sm sm:text-lg text-stone-300 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
                 Manufacturer of premium cleaning and personal-care products. We blend raw organic <strong>Aloe Vera</strong> and <strong>Hibiscus</strong> harvested along the Aberdare ranges with modern, eco-friendly precision manufacturing.
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
                 <button
                   onClick={() => handleShopClick('all')}
-                  className="w-full sm:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-sm rounded-2xl shadow-xl shadow-emerald-900/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs sm:text-sm rounded-2xl shadow-xl shadow-emerald-900/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95"
                 >
                   <span>Shop Online Now</span>
                   <ArrowRight size={16} />
@@ -75,7 +119,7 @@ export const HomePage = ({ setActivePage, onCategorySelect }) => {
 
                 <button
                   onClick={() => setIsWholesaleModalOpen(true)}
-                  className="w-full sm:w-auto px-7 py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-sm rounded-2xl border border-white/20 backdrop-blur-xs flex items-center justify-center gap-2 transition-all"
+                  className="w-full sm:w-auto px-6 sm:px-7 py-3.5 sm:py-4 bg-white/10 hover:bg-white/20 text-white font-bold text-xs sm:text-sm rounded-2xl border border-white/20 backdrop-blur-xs flex items-center justify-center gap-2 transition-all"
                 >
                   <Building2 size={16} />
                   <span>Wholesale & Hotels</span>
@@ -83,7 +127,7 @@ export const HomePage = ({ setActivePage, onCategorySelect }) => {
               </div>
 
               {/* Quick Trust Pillars */}
-              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-stone-800 text-left">
+              <div className="pt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 border-t border-stone-800 text-left">
                 <div className="space-y-0.5">
                   <span className="text-emerald-400 font-extrabold text-base sm:text-lg">100%</span>
                   <p className="text-[11px] text-stone-400">Highland Botanicals</p>

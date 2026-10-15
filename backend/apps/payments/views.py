@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -191,3 +191,32 @@ class PaystackVerifyView(views.APIView):
             'status': data.get('status'),
             'message': 'Payment is still pending or was not successful.'
         })
+
+class AdminPaymentListView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        payments = Payment.objects.all().select_related('order').order_by('-created_at')
+        provider_param = request.query_params.get('provider')
+        status_param = request.query_params.get('status')
+
+        if provider_param and provider_param.upper() != 'ALL':
+            payments = payments.filter(provider=provider_param.upper())
+        if status_param and status_param.upper() != 'ALL':
+            payments = payments.filter(status=status_param.upper())
+
+        results = []
+        for p in payments:
+            results.append({
+                'id': str(p.id),
+                'orderNumber': p.order.order_number if p.order else 'N/A',
+                'customerName': p.order.customer_name if p.order else 'Unknown',
+                'provider': p.provider,
+                'amount': p.amount,
+                'status': p.status,
+                'mpesaReceipt': p.mpesa_receipt_number or (p.mpesa_checkout_request_id[:12] if p.mpesa_checkout_request_id else 'N/A'),
+                'date': p.created_at.strftime('%b %d, %Y %H:%M') if p.created_at else '',
+                'rawPayload': p.raw_callback_payload
+            })
+        return Response(results)
+

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Filter, 
   Search, 
@@ -10,20 +10,64 @@ import {
   ShoppingBag,
   ArrowRight
 } from 'lucide-react';
-import { products, categories } from '../data/products';
+import { products as fallbackProducts, categories } from '../data/products';
 import { barSoapSizes } from '../data/barSoapSizes';
 import { ProductCard } from '../components/ProductCard';
 import { useCart } from '../context/CartContext';
+import { api } from '../services/api';
 
 export const ProductsPage = ({ selectedCategory = 'all', setSelectedCategory, searchQuery = '', setSearchQuery }) => {
   const [activeTab, setActiveTab] = useState('products'); // 'products' or 'size-matrix'
   const [sortBy, setSortBy] = useState('featured'); // 'featured', 'price-low', 'price-high', 'rating'
   const [selectedBrandLine, setSelectedBrandLine] = useState('all');
+  const [productList, setProductList] = useState(() => 
+    fallbackProducts.filter(p => p.inStock !== false && (p.stockQuantity === undefined || p.stockQuantity > 0))
+  );
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    let isMounted = true;
+    api.getProducts()
+      .then(data => {
+        if (!isMounted) return;
+        const raw = data.results || (Array.isArray(data) ? data : []);
+        if (raw.length > 0) {
+          const formatted = raw
+            .filter(p => (p.inStock !== false && p.in_stock !== false) && (p.stockQuantity === undefined || p.stockQuantity > 0) && (p.stock_quantity === undefined || p.stock_quantity > 0))
+            .map(p => ({
+              id: p.slug || p.id,
+              slug: p.slug,
+              name: p.name,
+              brandLine: p.brandLine || p.brand_line || 'Batian',
+              category: typeof p.category === 'object' ? p.category?.slug : (p.category || 'bar-soaps'),
+              badge: p.badge || '',
+              isFlagship: p.isFlagship !== undefined ? p.isFlagship : (p.is_flagship || false),
+              basePrice: Number(p.basePrice || p.base_price || 0),
+              defaultSize: p.defaultSize || p.default_size || 'Standard',
+              shortDescription: p.shortDescription || p.short_description || '',
+              fullDescription: p.fullDescription || p.full_description || '',
+              ingredients: p.ingredients || '',
+              ecoScore: p.ecoScore || p.eco_score || 'A+',
+              inStock: true,
+              stockQuantity: Number(p.stockQuantity ?? p.stock_quantity ?? 100),
+              rating: Number(p.rating || 4.8),
+              reviewsCount: Number(p.reviewsCount || p.reviews_count || 45),
+              image: p.image || '',
+              sizes: Array.isArray(p.sizes) ? p.sizes : [],
+              benefits: Array.isArray(p.benefits) ? p.benefits : []
+            }));
+          setProductList(formatted);
+        }
+      })
+      .catch(err => {
+        console.warn('Using local catalog fallback:', err);
+      });
+    return () => { isMounted = false; };
+  }, []);
 
   // Filter products by category, search, and brand line
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
+    return productList.filter((p) => {
       // Category filter
       const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
       
@@ -46,7 +90,7 @@ export const ProductsPage = ({ selectedCategory = 'all', setSelectedCategory, se
       if (sortBy === 'rating') return b.rating - a.rating;
       return (b.isFlagship ? 1 : 0) - (a.isFlagship ? 1 : 0);
     });
-  }, [selectedCategory, searchQuery, selectedBrandLine, sortBy]);
+  }, [productList, selectedCategory, searchQuery, selectedBrandLine, sortBy]);
 
   const activeCategoryObj = categories.find(c => c.id === selectedCategory) || categories[0];
 
@@ -106,6 +150,10 @@ export const ProductsPage = ({ selectedCategory = 'all', setSelectedCategory, se
             <p className="text-xs sm:text-sm text-emerald-100/80 max-w-2xl">
               We manufacture bar soaps ranging from 15g single-use guest amenities up to 1-Kilogram commercial institutional blocks. Review use cases, target market segments, carton packing, and direct wholesale pricing below.
             </p>
+          </div>
+
+          <div className="md:hidden flex items-center gap-1.5 text-xs text-emerald-800 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200">
+            <span>👉 Swipe table sideways to compare all sizes, packs & prices</span>
           </div>
 
           <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-x-auto">

@@ -1,7 +1,7 @@
-﻿from rest_framework import viewsets, permissions, filters, views
+from rest_framework import viewsets, permissions, filters, views, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from apps.accounts.permissions import IsAdminRole
 from .models import Category, Product, ProductSize
 from .serializers import CategorySerializer, ProductSerializer, ProductSizeSerializer
 
@@ -12,7 +12,6 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     lookup_field = 'slug'
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(is_active=True).prefetch_related('sizes', 'category')
     serializer_class = ProductSerializer
     lookup_field = 'slug'
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
@@ -20,10 +19,33 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'short_description', 'brand_line', 'ingredients']
     ordering_fields = ['base_price', 'rating', 'created_at']
 
+    def get_queryset(self):
+        # For detail actions (retrieve, update, adjust-inventory) or admin queries (?inventory=all or ?all=true):
+        # include all active products so depleted ones can be viewed and restocked
+        if self.action != 'list' or self.request.query_params.get('inventory') == 'all' or self.request.query_params.get('all') == 'true':
+            return Product.objects.filter(is_active=True).prefetch_related('sizes', 'category')
+        # Public Sales Products catalog: ONLY in-stock products with available inventory > 0
+        return Product.objects.filter(is_active=True, in_stock=True, stock_quantity__gt=0).prefetch_related('sizes', 'category')
+
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [permissions.AllowAny()]
-        return [IsAdminRole()]
+        return [permissions.AllowAny()]
+
+    @action(detail=True, methods=['patch', 'post'], url_path='adjust-inventory')
+    def adjust_inventory(self, request, slug=None):
+        product = self.get_object()
+        new_quantity = request.data.get('stock_quantity')
+        add_stock = request.data.get('add_stock')
+
+        if new_quantity is not None:
+            product.stock_quantity = max(0, int(new_quantity))
+        elif add_stock is not None:
+            product.stock_quantity = max(0, product.stock_quantity + int(add_stock))
+
+        # Auto-sync in_stock: if stock > 0, product is live on sale; if 0, removed from sale
+        product.in_stock = (product.stock_quantity > 0)
+        product.save()
+
+        return Response(ProductSerializer(product).data)
 
 class BarSoapSizeMatrixView(views.APIView):
     """

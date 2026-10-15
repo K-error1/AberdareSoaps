@@ -35,20 +35,20 @@ export const CheckoutModal = () => {
   } = useCart();
   const { user, isAuthenticated, openLogin } = useAuth();
 
-  // Form Fields
+  // Form Fields - Clean initial state without mock defaults
   const [formData, setFormData] = useState({
-    fullName: user?.name || 'Jane Wambui',
-    phone: user?.phone || '0712792555',
-    email: user?.email || 'wambui.jane@gmail.com',
-    county: 'Nairobi',
-    town: 'Westlands / Parklands',
-    address: 'Rhapta Road, Acacia Court Apt 4B',
-    notes: 'Please call when arriving at the gate'
+    fullName: '',
+    phone: '',
+    email: '',
+    county: '',
+    town: '',
+    address: '',
+    notes: ''
   });
 
   const [paymentMethod, setPaymentMethod] = useState('mpesa'); // 'mpesa', 'card', 'cod'
   const [stkState, setStkState] = useState('idle'); // 'idle', 'pushing', 'prompting', 'success', 'failed'
-  const [stkPhone, setStkPhone] = useState('0712792555');
+  const [stkPhone, setStkPhone] = useState('');
   const [stkCountdown, setStkCountdown] = useState(15);
   const [confirmedOrder, setConfirmedOrder] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,20 +134,20 @@ export const CheckoutModal = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-stone-200 my-8 animate-fadeIn">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl overflow-hidden border border-stone-200 my-2 sm:my-8 animate-fadeIn">
         
         {/* Modal Top Header */}
-        <div className="bg-gradient-to-r from-aberdares-dark to-aberdares-forest p-5 sm:p-6 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-aberdares-dark to-aberdares-forest p-4 sm:p-6 text-white flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-white/10 text-emerald-300">
               <ShieldCheck size={24} />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold tracking-tight">
+              <h2 className="text-base sm:text-xl font-extrabold tracking-tight">
                 {confirmedOrder ? 'Order Confirmed!' : 'Express Secure Checkout'}
               </h2>
-              <p className="text-xs text-emerald-200/80">
+              <p className="text-[11px] sm:text-xs text-emerald-200/80">
                 Aberdares Soaps • Factory Direct from Ruiru, Kenya
               </p>
             </div>
@@ -161,7 +161,7 @@ export const CheckoutModal = () => {
         </div>
 
         {/* BODY */}
-        <div className="p-5 sm:p-7 max-h-[80vh] overflow-y-auto">
+        <div className="p-4 sm:p-7 max-h-[85vh] sm:max-h-[80vh] overflow-y-auto">
           {confirmedOrder ? (
             /* Order Success View */
             <div className="space-y-6 animate-fadeIn">
@@ -262,9 +262,28 @@ export const CheckoutModal = () => {
                     Recipient Contact Details
                   </h3>
                   {isAuthenticated ? (
-                    <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                      Signed in as {user?.email}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                        Signed in as {user?.email}
+                      </span>
+                      {(user?.name || user?.phone || user?.email) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              fullName: user.name || prev.fullName,
+                              phone: user.phone || prev.phone,
+                              email: user.email || prev.email
+                            }));
+                            if (user.phone) setStkPhone(user.phone);
+                          }}
+                          className="text-[11px] text-emerald-800 hover:text-emerald-950 font-bold underline transition-colors"
+                        >
+                          Use my profile
+                        </button>
+                      )}
+                    </div>
                   ) : (
                     <button
                       type="button"
@@ -287,7 +306,7 @@ export const CheckoutModal = () => {
                       required
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      placeholder="e.g. Jane Wambui"
+                      placeholder="Recipient's Full Name"
                       className="w-full px-3.5 py-2 text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
@@ -432,7 +451,7 @@ export const CheckoutModal = () => {
                         required
                         value={formData.address}
                         onChange={handleInputChange}
-                        placeholder="e.g. Rhapta Road, Acacia Court Apt 4B (near Sarit)"
+                        placeholder="e.g. Street name, building, apartment / house number"
                         className="w-full px-3.5 py-2 text-xs border border-stone-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                       />
                     </div>

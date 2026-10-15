@@ -48,62 +48,62 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 transition-all">
       {/* Top Announcement Bar */}
-      <div className="bg-aberdares-dark text-stone-200 text-xs py-2 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 text-center sm:text-left">
-          <div className="flex items-center gap-2">
-            <span className="bg-aberdares-emerald/80 text-white font-bold px-2 py-0.5 rounded-full text-[10px] tracking-wider uppercase">
+      <div className="bg-aberdares-dark text-stone-200 text-xs py-1.5 sm:py-2 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 text-[11px] sm:text-xs">
+          <div className="flex items-center gap-1.5 truncate">
+            <span className="bg-aberdares-emerald/80 text-white font-bold px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] tracking-wider uppercase flex-shrink-0">
               Factory Direct
             </span>
-            <span>Ruiru, Kimbo – Matangi Road | Nature Meets Innovation</span>
+            <span className="truncate">Ruiru, Kimbo – Matangi Rd</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <span className="hidden md:inline-flex items-center gap-1 text-emerald-300">
-              <Truck size={13} /> Free delivery in Nairobi & Kiambu over KSh 3,000
+              <Truck size={13} /> Free delivery over KSh 3,000
             </span>
             <button
               onClick={() => setIsTrackingOpen(true)}
-              className="hover:text-white underline underline-offset-2 flex items-center gap-1 transition-colors"
+              className="hover:text-white underline underline-offset-2 flex items-center gap-1 transition-colors text-[11px] sm:text-xs"
             >
               Track Order
             </button>
-            <span className="hidden sm:inline-block text-stone-500">|</span>
+            <span className="text-stone-500">|</span>
             <a 
               href="tel:+254712792555" 
-              className="flex items-center gap-1 hover:text-white transition-colors"
+              className="flex items-center gap-1 hover:text-white transition-colors text-[11px] sm:text-xs font-semibold"
             >
-              <Phone size={12} /> +254 712 792 555
+              <Phone size={11} /> 0712 792 555
             </a>
           </div>
         </div>
       </div>
 
       {/* Top Row: Brand & Utilities */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 sm:h-20 gap-4 lg:gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-14 sm:h-20 gap-2 sm:gap-4 lg:gap-8">
           
           {/* Logo (Left) */}
           <div 
             onClick={() => handleNavClick('home')}
-            className="flex items-center gap-3 cursor-pointer group select-none flex-shrink-0"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer group select-none flex-shrink-0"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-aberdares-forest to-aberdares-dark text-white flex items-center justify-center shadow-md shadow-aberdares-forest/20 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-aberdares-forest to-aberdares-dark text-white flex items-center justify-center shadow-md shadow-aberdares-forest/20 group-hover:scale-105 transition-transform flex-shrink-0">
               {/* Mountain & Botanical Leaf SVG */}
-              <svg className="w-6 h-6 sm:w-7 sm:h-7" viewBox="0 0 64 64" fill="none">
+              <svg className="w-5 h-5 sm:w-7 sm:h-7" viewBox="0 0 64 64" fill="none">
                 <path d="M12 44L26 22L36 34L42 26L52 44H12Z" fill="#74c69d" opacity="0.6"/>
                 <path d="M22 44L34 26L46 44H22Z" fill="#ffffff" />
                 <path d="M34 22C34 22 44 28 44 38C44 42 41 45 36 45C30 45 28 40 28 40C28 40 30 32 34 22Z" fill="#f07167" />
               </svg>
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xl sm:text-2xl tracking-tight text-aberdares-dark">
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <span className="font-extrabold text-lg sm:text-2xl tracking-tight text-aberdares-dark">
                   ABERDARES
                 </span>
-                <span className="text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-aberdares-forest uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-semibold px-1.5 py-0.5 rounded bg-emerald-100 text-aberdares-forest uppercase tracking-wider">
                   Soaps
                 </span>
               </div>
-              <p className="text-[10px] text-stone-500 font-medium tracking-wider uppercase -mt-0.5">
+              <p className="hidden sm:block text-[10px] text-stone-500 font-medium tracking-wider uppercase -mt-0.5">
                 Nature Meets Innovation
               </p>
             </div>

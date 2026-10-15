@@ -1,6 +1,6 @@
-﻿import secrets
+import secrets
 import hashlib
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 from rest_framework import views, status, permissions
 from rest_framework.response import Response
@@ -69,9 +69,16 @@ class OrderCreateView(views.APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-                # Reserve stock
+                # Reserve stock and update inventory
                 target_stock.reserved_quantity += qty
+                target_stock.stock_quantity = max(0, target_stock.stock_quantity - qty)
                 target_stock.save()
+
+                if target_stock != product:
+                    product.stock_quantity = max(0, product.stock_quantity - qty)
+                    if product.stock_quantity <= 0:
+                        product.in_stock = False
+                    product.save()
 
                 line_total = unit_price * qty
                 subtotal += line_total
@@ -240,3 +247,74 @@ class UserOrdersListView(views.APIView):
     def get(self, request):
         orders = Order.objects.filter(user=request.user).order_by('-created_at')
         return Response(OrderDetailSerializer(orders, many=True).data)
+
+class AdminOrderListView(views.APIView):
+    """
+    Admin endpoint to list all orders from the database.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        queryset = Order.objects.all().prefetch_related('items', 'status_history').order_by('-created_at')
+        status_param = request.query_params.get('status')
+        payment_param = request.query_params.get('payment_method')
+        search_param = request.query_params.get('search')
+
+        if status_param and status_param.upper() != 'ALL':
+            queryset = queryset.filter(status=status_param.upper())
+        if payment_param and payment_param.upper() != 'ALL':
+            queryset = queryset.filter(payment_method__iexact=payment_param)
+        if search_param:
+            queryset = queryset.filter(
+                models.Q(order_number__icontains=search_param) |
+                models.Q(customer_name__icontains=search_param) |
+                models.Q(customer_phone__icontains=search_param) |
+                models.Q(customer_email__icontains=search_param)
+            )
+
+        serializer = OrderDetailSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+class AdminOrderStatusUpdateView(views.APIView):
+    """
+    Admin endpoint to update order status and log in status history.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, identifier):
+        clean_id = identifier.strip().upper()
+        order = Order.objects.filter(order_number=clean_id).first()
+        if not order:
+            try:
+                order = Order.objects.get(id=identifier)
+            except Exception:
+                return Response(
+                    {'error': {'code': 'ORDER_NOT_FOUND', 'message': 'Order not found.', 'details': {}}},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+        new_status = request.data.get('status')
+        notes = request.data.get('notes', f"Status updated to {new_status}")
+
+        if not new_status:
+            return Response({'error': {'message': 'Status is required.'}}, status=status.HTTP_400_BAD_REQUEST)
+
+        valid_statuses = [choice[0] for choice in Order.Status.choices]
+        if new_status.upper() not in valid_statuses:
+            return Response({'error': {'message': f'Invalid status. Must be one of: {valid_statuses}'}}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_status = order.status
+        order.status = new_status.upper()
+        if order.status == Order.Status.DELIVERED and order.payment_method == Order.PaymentMethod.COD:
+            order.payment_status = Order.PaymentStatus.SUCCESS
+        order.save()
+
+        OrderStatusHistory.objects.create(
+            order=order,
+            from_status=old_status,
+            to_status=order.status,
+            changed_by=request.user if (request.user and request.user.is_authenticated) else None,
+            notes=notes
+        )
+
+        return Response(OrderDetailSerializer(order).data)

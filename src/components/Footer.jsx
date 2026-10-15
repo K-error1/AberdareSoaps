@@ -126,6 +126,11 @@ export const Footer = ({ setActivePage, onCategorySelect }) => {
                   Contact & Map
                 </button>
               </li>
+              <li>
+                <button onClick={() => handlePageClick('track')} className="text-emerald-400 font-bold hover:text-white">
+                  Track Your Order &rarr;
+                </button>
+              </li>
             </ul>
           </div>
 

@@ -1,4 +1,4 @@
-﻿import uuid
+import uuid
 import random
 from django.db import models
 from django.conf import settings
@@ -11,8 +11,10 @@ def generate_order_number():
 class Order(TimeStampedUUIDModel):
     class Status(models.TextChoices):
         PENDING = 'PENDING', 'Pending Payment'
+        RECEIVED = 'RECEIVED', 'Order Received'
         PAID = 'PAID', 'Paid'
-        PROCESSING = 'PROCESSING', 'Processing & Formulation at Ruiru'
+        PROCESSING = 'PROCESSING', 'Processing'
+        PACKAGED = 'PACKAGED', 'Packaged & Sealed'
         OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY', 'Out for Delivery'
         DELIVERED = 'DELIVERED', 'Delivered'
         CANCELLED = 'CANCELLED', 'Cancelled'

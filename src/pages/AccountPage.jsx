@@ -17,55 +17,66 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
     setAuthError
   } = useAuth();
 
-  // Multi-step Jumia style flow:
-  // 1. 'identifier' (Email or Mobile Number input)
-  // 2. 'login' (Enter existing password)
-  // 3. 'register' (New user enters full name & sets password)
-  const [step, setStep] = useState('identifier'); // 'identifier', 'login', 'register'
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
+  // Auth mode: 'register' (Sign Up first) or 'login' (Sign In)
+  const [mode, setMode] = useState('register');
+  
+  // Registration form fields
+  const [registerForm, setRegisterForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  // Login form fields
+  const [loginIdentifier, setLoginIdentifier] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
-  const isEmail = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val.trim());
-
-  const handleIdentifierSubmit = (e) => {
-    e.preventDefault();
-    setAuthError('');
-    const clean = identifier.trim();
-    if (!clean) {
-      setAuthError('Please enter your email or mobile number.');
-      return;
-    }
-    // Proceed to password login step (user can toggle to register if new)
-    setStep('login');
-  };
-
-  const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setAuthError('');
-    try {
-      const emailToUse = isEmail(identifier) ? identifier.trim() : `${identifier.replace(/\D/g, '')}@aberdares.co.ke`;
-      await login(emailToUse, password);
-    } catch {
-      // Error handled by AuthContext
-    }
+  const handleRegisterChange = (e) => {
+    const { name, value } = e.target;
+    setRegisterForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
+    const email = registerForm.email.trim();
+    if (!email || !email.includes('@')) {
+      setAuthError('Please enter a valid email address.');
+      return;
+    }
+    if (registerForm.password.length < 8) {
+      setAuthError('Password must be at least 8 characters long.');
+      return;
+    }
+    if (registerForm.password !== registerForm.confirmPassword) {
+      setAuthError('Passwords do not match.');
+      return;
+    }
     try {
-      const isMail = isEmail(identifier);
-      const email = isMail ? identifier.trim() : `${identifier.replace(/\D/g, '')}@aberdares.co.ke`;
-      const phone = !isMail ? identifier.trim() : '';
-
       await register({
-        email,
-        phone,
-        name: fullName || 'Valued Customer',
-        password
+        email: email.toLowerCase(),
+        phone: registerForm.phone ? registerForm.phone.trim() : null,
+        name: registerForm.name.trim() || 'Valued Customer',
+        password: registerForm.password
       });
+    } catch {
+      // Error handled by AuthContext
+    }
+  };
+
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    const cleanId = loginIdentifier.trim();
+    if (!cleanId) {
+      setAuthError('Please enter your email or mobile number.');
+      return;
+    }
+    try {
+      await login(cleanId, loginPassword);
     } catch {
       // Error handled by AuthContext
     }
@@ -125,7 +136,7 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [googleLogin, step]);
+  }, [googleLogin, mode]);
 
   const handleGoogleSignIn = () => {
     if (window.google?.accounts?.id) {
@@ -242,10 +253,42 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
               Welcome to Aberdares
             </h1>
             <p className="text-xs text-stone-500 leading-relaxed">
-              {step === 'identifier' && "Use your email or phone to log in or sign up."}
-              {step === 'login' && `Enter your password to sign in for ${identifier}.`}
-              {step === 'register' && `Create your new account for ${identifier}.`}
+              {mode === 'register' 
+                ? "Join Aberdares to manage orders, fast checkout, and exclusive offers." 
+                : "Sign in with your email or phone to access your account."}
             </p>
+          </div>
+
+          {/* Mode Switcher Tabs: Sign Up first, then Sign In */}
+          <div className="flex bg-stone-100 p-1 rounded-2xl text-xs font-bold shadow-inner">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('register');
+                setAuthError('');
+              }}
+              className={`flex-1 py-2.5 rounded-xl transition-all ${
+                mode === 'register'
+                  ? 'bg-aberdares-forest text-white shadow-sm'
+                  : 'text-stone-500 hover:text-slate-800'
+              }`}
+            >
+              Sign Up
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login');
+                setAuthError('');
+              }}
+              className={`flex-1 py-2.5 rounded-xl transition-all ${
+                mode === 'login'
+                  ? 'bg-aberdares-forest text-white shadow-sm'
+                  : 'text-stone-500 hover:text-slate-800'
+              }`}
+            >
+              Sign In
+            </button>
           </div>
 
           {authError && (
@@ -255,61 +298,167 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
             </div>
           )}
 
-          {/* STEP 1: Enter Email or Phone (Floating Label Input styled in Aberdares Forest Green) */}
-          {step === 'identifier' && (
-            <form onSubmit={handleIdentifierSubmit} className="space-y-5">
-              <div className="relative pt-2">
-                <div className="relative border-2 border-aberdares-forest rounded-xl bg-white px-3.5 py-3 focus-within:ring-2 focus-within:ring-aberdares-forest/20 transition-all">
-                  <label className="absolute -top-2.5 left-3 bg-white px-1.5 text-[11px] font-bold text-aberdares-forest">
-                    Email or Mobile Number*
-                  </label>
+          {/* SIGN UP FORM (Appears First) */}
+          {mode === 'register' && (
+            <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2 focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">Full Name *</label>
+                <div className="flex items-center gap-2">
+                  <User size={14} className="text-stone-400" />
                   <input
                     type="text"
+                    name="name"
                     required
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="e.g. name@domain.com or 0712 345 678"
-                    className="w-full text-sm font-medium text-slate-900 focus:outline-none bg-transparent"
+                    value={registerForm.name}
+                    onChange={handleRegisterChange}
+                    placeholder="Your Full Name"
+                    className="w-full text-xs font-medium text-slate-900 focus:outline-none"
                     autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2 focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">Email Address *</label>
+                <div className="flex items-center gap-2">
+                  <Mail size={14} className="text-stone-400" />
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    value={registerForm.email}
+                    onChange={handleRegisterChange}
+                    placeholder="e.g. jane@example.com"
+                    className="w-full text-xs font-medium text-slate-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2 focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">Mobile Number (Optional)</label>
+                <div className="flex items-center gap-2">
+                  <Phone size={14} className="text-stone-400" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={registerForm.phone}
+                    onChange={handleRegisterChange}
+                    placeholder="e.g. 0712 345 678"
+                    className="w-full text-xs font-medium text-slate-900 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2 flex items-center focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <div className="w-full">
+                  <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">Password *</label>
+                  <div className="flex items-center gap-2">
+                    <Lock size={14} className="text-stone-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      required
+                      minLength={8}
+                      value={registerForm.password}
+                      onChange={handleRegisterChange}
+                      placeholder="At least 8 characters"
+                      className="w-full text-xs font-medium text-slate-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-stone-400 hover:text-stone-600 p-1"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2 focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">Confirm Password *</label>
+                <div className="flex items-center gap-2">
+                  <Lock size={14} className="text-stone-400" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    required
+                    minLength={8}
+                    value={registerForm.confirmPassword}
+                    onChange={handleRegisterChange}
+                    placeholder="Re-enter password"
+                    className="w-full text-xs font-medium text-slate-900 focus:outline-none"
                   />
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 px-4 bg-aberdares-forest hover:bg-aberdares-dark text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+                disabled={loading}
+                className="w-full py-3.5 px-4 bg-aberdares-forest hover:bg-aberdares-dark text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
               >
-                <span>Continue</span>
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Creating account...</span>
+                  </>
+                ) : (
+                  <span>Create Account</span>
+                )}
               </button>
-            </form>
-          )}
 
-          {/* STEP 2: Password entry for Login */}
-          {step === 'login' && (
-            <form onSubmit={handleLoginSubmit} className="space-y-4">
-              <div className="flex items-center justify-between text-xs pb-1">
+              <div className="text-center text-xs pt-1">
+                <span className="text-stone-500">Already registered? </span>
                 <button
                   type="button"
                   onClick={() => {
-                    setStep('identifier');
+                    setMode('login');
                     setAuthError('');
                   }}
-                  className="flex items-center gap-1 text-stone-500 hover:text-slate-800 transition-colors"
+                  className="text-emerald-700 hover:underline font-bold"
                 >
-                  <ArrowLeft size={14} /> Change {identifier}
+                  Sign In here
                 </button>
               </div>
+            </form>
+          )}
 
-              <div className="relative border-2 border-aberdares-forest rounded-xl bg-white px-3.5 py-3 flex items-center focus-within:ring-2 focus-within:ring-aberdares-forest/20">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full text-sm font-medium text-slate-900 focus:outline-none bg-transparent"
-                  autoFocus
-                />
+          {/* SIGN IN FORM */}
+          {mode === 'login' && (
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2.5 focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">
+                  Email or Mobile Number *
+                </label>
+                <div className="flex items-center gap-2">
+                  <Mail size={14} className="text-stone-400" />
+                  <input
+                    type="text"
+                    required
+                    value={loginIdentifier}
+                    onChange={(e) => setLoginIdentifier(e.target.value)}
+                    placeholder="e.g. name@domain.com or 0712 345 678"
+                    className="w-full text-xs font-medium text-slate-900 focus:outline-none"
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2.5 flex items-center focus-within:border-aberdares-forest focus-within:ring-1 focus-within:ring-aberdares-forest/20">
+                <div className="w-full">
+                  <label className="text-[10px] font-bold text-stone-500 uppercase block mb-0.5">Password *</label>
+                  <div className="flex items-center gap-2">
+                    <Lock size={14} className="text-stone-400" />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={loginPassword}
+                      onChange={(e) => setLoginPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className="w-full text-xs font-medium text-slate-900 focus:outline-none"
+                    />
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -330,7 +479,7 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
                     <span>Signing in...</span>
                   </>
                 ) : (
-                  <span>Log In</span>
+                  <span>Sign In</span>
                 )}
               </button>
 
@@ -338,102 +487,24 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
                 <button
                   type="button"
                   onClick={() => {
-                    setStep('register');
+                    setMode('register');
                     setAuthError('');
                   }}
-                  className="text-emerald-700 hover:underline font-semibold"
+                  className="text-emerald-700 hover:underline font-bold"
                 >
-                  New customer? Sign up
+                  New customer? Sign Up
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    setIdentifier('admin@aberdares.co.ke');
-                    setPassword('AberdaresAdminPassword2026!');
+                    setLoginIdentifier('admin@aberdares.co.ke');
+                    setLoginPassword('AberdaresAdminPassword2026!');
                   }}
                   className="text-stone-400 hover:underline text-[11px]"
                 >
                   Demo credentials
                 </button>
               </div>
-            </form>
-          )}
-
-          {/* STEP 3: Register New User */}
-          {step === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              <div className="flex items-center justify-between text-xs pb-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('identifier');
-                    setAuthError('');
-                  }}
-                  className="flex items-center gap-1 text-stone-500 hover:text-slate-800 transition-colors"
-                >
-                  <ArrowLeft size={14} /> Back
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStep('login');
-                    setAuthError('');
-                  }}
-                  className="text-emerald-700 hover:underline font-semibold"
-                >
-                  Already have an account? Log In
-                </button>
-              </div>
-
-              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2.5 focus-within:border-aberdares-forest">
-                <label className="text-[10px] font-bold text-stone-500 uppercase block">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Jane Wambui"
-                  className="w-full text-xs font-medium text-slate-900 focus:outline-none"
-                  autoFocus
-                />
-              </div>
-
-              <div className="border border-stone-300 rounded-xl bg-white px-3.5 py-2.5 flex items-center focus-within:border-aberdares-forest">
-                <div className="w-full">
-                  <label className="text-[10px] font-bold text-stone-500 uppercase block">Create Password</label>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    minLength={8}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Min 8 characters"
-                    className="w-full text-xs font-medium text-slate-900 focus:outline-none"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-stone-400 hover:text-stone-600 p-1"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 px-4 bg-aberdares-forest hover:bg-aberdares-dark text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Creating account...</span>
-                  </>
-                ) : (
-                  <span>Create Account & Continue</span>
-                )}
-              </button>
             </form>
           )}
 

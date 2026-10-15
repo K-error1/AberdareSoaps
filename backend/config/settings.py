@@ -1,4 +1,4 @@
-﻿"""
+"""
 Django settings for Aberdares E-Commerce Backend.
 """
 from pathlib import Path
@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'apps.promos',
     'apps.loyalty',
     'apps.notifications',
+    'apps.blog',
 ]
 
 MIDDLEWARE = [

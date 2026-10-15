@@ -11,10 +11,10 @@ export const WhatsAppButton = () => {
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${defaultMessage}`;
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+    <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 flex flex-col items-end">
       {/* Interactive Tooltip Card */}
       {tooltipOpen && (
-        <div className="mb-3 w-72 bg-white rounded-2xl shadow-2xl border border-emerald-100 p-4 animate-bounce-short relative text-slate-800">
+        <div className="mb-3 w-72 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-emerald-100 p-4 animate-bounce-short relative text-slate-800">
           <button 
             onClick={() => setTooltipOpen(false)}
             className="absolute top-2.5 right-2.5 text-stone-400 hover:text-stone-700"

@@ -1,4 +1,4 @@
-﻿from django.db import models
+from django.db import models
 from apps.core.models import TimeStampedUUIDModel
 
 class Category(TimeStampedUUIDModel):
@@ -40,6 +40,15 @@ class Product(TimeStampedUUIDModel):
 
     def __str__(self):
         return f"{self.name} ({self.brand_line})"
+
+    def save(self, *args, **kwargs):
+        # Automatically update in_stock based on available inventory
+        if self.stock_quantity <= 0:
+            self.in_stock = False
+        elif self.stock_quantity > 0 and not self.in_stock:
+            # Admin added product inventory, restore to sales catalog
+            self.in_stock = True
+        super().save(*args, **kwargs)
 
     @property
     def available_stock(self):

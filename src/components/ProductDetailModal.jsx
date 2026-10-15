@@ -70,11 +70,11 @@ export const ProductDetailModal = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 max-h-[85vh] overflow-y-auto">
           
           {/* Left: Product Image & Badges */}
-          <div className="md:col-span-5 relative bg-stone-100 flex items-center justify-center min-h-[300px] md:min-h-full">
+          <div className="md:col-span-5 relative bg-stone-100 flex items-center justify-center h-56 sm:h-72 md:h-full md:min-h-full">
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-full object-cover object-center max-h-[420px]"
+              className="w-full h-full object-cover object-center"
             />
             <div className="absolute top-4 left-4 flex flex-col gap-1.5">
               {product.badge && (
@@ -91,7 +91,7 @@ export const ProductDetailModal = () => {
           </div>
 
           {/* Right: Product Details */}
-          <div className="md:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-5">
+          <div className="md:col-span-7 p-4 sm:p-8 flex flex-col justify-between space-y-4 sm:space-y-5">
             
             <div>
               {/* Brand & Reviews */}

@@ -1,4 +1,4 @@
-﻿import re
+import re
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.exceptions import ValidationError
@@ -9,7 +9,9 @@ def validate_kenyan_phone(value):
     Validates E.164 phone format or Kenyan standard:
     Accepts: +2547XXXXXXXX, 2547XXXXXXXX, 07XXXXXXXX, 01XXXXXXXX
     """
-    cleaned = re.sub(r'[\s\-\(\)]', '', value)
+    if not value:
+        return
+    cleaned = re.sub(r'[\s\-\(\)]', '', str(value))
     if re.match(r'^(?:\+254|254|0)?([71]\d{8})$', cleaned):
         return
     raise ValidationError("Enter a valid Kenyan phone number (e.g., +254712345678 or 0712345678).")
@@ -18,7 +20,11 @@ def normalize_kenyan_phone(phone_str):
     """
     Normalizes any Kenyan phone string to 2547XXXXXXXX or 2541XXXXXXXX format.
     """
+    if not phone_str:
+        return None
     cleaned = re.sub(r'[\s\-\(\)\+]', '', str(phone_str))
+    if not cleaned:
+        return None
     if cleaned.startswith('0') and len(cleaned) == 10:
         return '254' + cleaned[1:]
     if cleaned.startswith('254') and len(cleaned) == 12:
@@ -32,8 +38,12 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('Email address is required')
         email = self.normalize_email(email).lower()
-        if 'phone' in extra_fields and extra_fields['phone']:
-            extra_fields['phone'] = normalize_kenyan_phone(extra_fields['phone'])
+        if 'phone' in extra_fields:
+            raw_phone = extra_fields.get('phone')
+            if raw_phone and str(raw_phone).strip():
+                extra_fields['phone'] = normalize_kenyan_phone(raw_phone)
+            else:
+                extra_fields['phone'] = None
         user = self.model(email=email, **extra_fields)
         if password:
             user.set_password(password)
@@ -78,6 +88,20 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedUUIDModel):
     @property
     def is_admin(self):
         return self.role == self.Role.ADMIN or self.is_superuser
+
+    def clean(self):
+        super().clean()
+        if self.phone and str(self.phone).strip():
+            self.phone = normalize_kenyan_phone(self.phone)
+        else:
+            self.phone = None
+
+    def save(self, *args, **kwargs):
+        if self.phone and str(self.phone).strip():
+            self.phone = normalize_kenyan_phone(self.phone)
+        else:
+            self.phone = None
+        super().save(*args, **kwargs)
 
 class PasswordResetToken(TimeStampedUUIDModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_tokens')

@@ -1,4 +1,4 @@
-﻿from rest_framework import serializers, views, status, permissions
+from rest_framework import serializers, views, viewsets, status, permissions
 from rest_framework.response import Response
 from django.utils import timezone
 from .models import PromoCode
@@ -61,3 +61,13 @@ class PromoValidateView(views.APIView):
             'description': promo.description,
             'applied_delivery_fee': max(0, delivery_fee - delivery_discount)
         })
+
+class PromoCodeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PromoCode
+        fields = '__all__'
+
+class AdminPromoCodeViewSet(viewsets.ModelViewSet):
+    queryset = PromoCode.objects.all().order_by('-created_at')
+    serializer_class = PromoCodeSerializer
+    permission_classes = [permissions.AllowAny]

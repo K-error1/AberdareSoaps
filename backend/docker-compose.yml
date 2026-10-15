@@ -1,4 +1,4 @@
-﻿name: aberdares-backend
+name: aberdares-backend
 
 services:
   aberdares_db:
@@ -41,7 +41,9 @@ services:
     depends_on:
       aberdares_db:
         condition: service_healthy
-    command: python manage.py runserver 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py runserver 0.0.0.0:8000"
 
   aberdares_worker:
     image: aberdares-backend:dev
@@ -58,7 +60,9 @@ services:
     depends_on:
       aberdares_db:
         condition: service_healthy
-    command: python manage.py qcluster
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py qcluster"
 
 volumes:
   aberdares_pgdata:

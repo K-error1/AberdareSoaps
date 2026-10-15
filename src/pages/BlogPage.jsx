@@ -1,26 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Calendar, 
   Clock, 
-  User, 
-  ArrowRight, 
-  X, 
-  Tag, 
-  Share2,
-  Sparkles
+  ArrowRight,
+  RefreshCw
 } from 'lucide-react';
-import { blogPosts } from '../data/blogPosts';
+import { blogPosts as fallbackPosts } from '../data/blogPosts';
+import { api } from '../services/api';
 
-export const BlogPage = () => {
-  const [selectedPost, setSelectedPost] = useState(null);
+export const BlogPage = ({ onSelectArticle }) => {
+  const [posts, setPosts] = useState(fallbackPosts);
   const [activeTag, setActiveTag] = useState('All');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      setIsLoading(true);
+      try {
+        const data = await api.getArticles();
+        const raw = data.results || (Array.isArray(data) ? data : []);
+        if (raw.length > 0) {
+          setPosts(raw.map(p => ({
+            id: p.slug || p.id,
+            slug: p.slug,
+            title: p.title,
+            category: p.category,
+            readTime: p.readTime || p.read_time || '5 min read',
+            date: p.date || p.date_display || 'Recent',
+            author: p.author || 'Aberdares Chemist',
+            summary: p.summary,
+            content: p.content,
+            image: p.image,
+            tags: Array.isArray(p.tags) ? p.tags : []
+          })));
+        }
+      } catch (err) {
+        console.warn('API getArticles fallback to static:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
 
   const allTags = ['All', 'Skincare', 'Botanicals', 'Sustainability', 'Greywater', 'Bio-Digester', 'Hospitality'];
 
   const filteredPosts = activeTag === 'All'
-    ? blogPosts
-    : blogPosts.filter(p => p.tags?.includes(activeTag));
+    ? posts
+    : posts.filter(p => p.tags?.some(t => t.toLowerCase() === activeTag.toLowerCase()));
+
+  const handleCardClick = (post) => {
+    if (onSelectArticle) {
+      onSelectArticle(post);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-10">
@@ -45,7 +80,7 @@ export const BlogPage = () => {
           <button
             key={tag}
             onClick={() => setActiveTag(tag)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               activeTag === tag
                 ? 'bg-aberdares-forest text-white shadow-xs'
                 : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
@@ -61,7 +96,7 @@ export const BlogPage = () => {
         {filteredPosts.map((post) => (
           <article
             key={post.id}
-            onClick={() => setSelectedPost(post)}
+            onClick={() => handleCardClick(post)}
             className="bg-white rounded-3xl border border-stone-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between cursor-pointer group"
           >
             <div className="relative aspect-16/9 overflow-hidden bg-stone-100">
@@ -98,10 +133,10 @@ export const BlogPage = () => {
 
               <div className="pt-4 border-t border-stone-100 flex items-center justify-between">
                 <span className="text-[11px] font-semibold text-stone-500">
-                  By {post.author.split(' ')[0]} {post.author.split(' ')[1]}
+                  By {post.author ? post.author.split(' ')[0] : 'Aberdares'} {post.author ? (post.author.split(' ')[1] || '') : 'Chemist'}
                 </span>
                 <span className="text-xs font-bold text-aberdares-forest flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  <span>Read Article</span>
+                  <span>Read Full Article</span>
                   <ArrowRight size={14} />
                 </span>
               </div>
@@ -110,83 +145,8 @@ export const BlogPage = () => {
         ))}
       </div>
 
-      {/* Full Article Reading Modal */}
-      {selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden border border-stone-200 my-6 relative max-h-[88vh] flex flex-col">
-            
-            <button
-              onClick={() => setSelectedPost(null)}
-              className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/80 hover:bg-stone-100 text-stone-700 flex items-center justify-center shadow-md backdrop-blur-xs transition-colors"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="overflow-y-auto">
-              <div className="relative aspect-16/9 max-h-[320px] w-full bg-stone-100">
-                <img
-                  src={selectedPost.image}
-                  alt={selectedPost.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent" />
-                <div className="absolute bottom-4 left-6 right-6 text-white">
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500 text-stone-950 font-extrabold text-[10px] uppercase tracking-wider">
-                    {selectedPost.category}
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-black text-white mt-1">
-                    {selectedPost.title}
-                  </h2>
-                </div>
-              </div>
-
-              <div className="p-6 sm:p-8 space-y-6">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-4 border-b border-stone-200 text-xs text-stone-500">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 font-semibold text-slate-800">
-                      <User size={13} /> {selectedPost.author}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={13} /> {selectedPost.date}
-                    </span>
-                  </div>
-                  <span className="px-2 py-0.5 rounded bg-stone-100 font-mono text-[10px]">
-                    {selectedPost.readTime}
-                  </span>
-                </div>
-
-                <div className="prose prose-stone max-w-none text-xs sm:text-sm text-stone-700 leading-relaxed space-y-4">
-                  {selectedPost.content.split('\n\n').map((paragraph, idx) => (
-                    <p key={idx}>{paragraph}</p>
-                  ))}
-                </div>
-
-                {/* Article Tags */}
-                <div className="pt-4 border-t border-stone-200 flex flex-wrap items-center gap-1.5">
-                  <Tag size={13} className="text-stone-400" />
-                  {selectedPost.tags?.map((t) => (
-                    <span key={t} className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold">
-                      #{t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    onClick={() => setSelectedPost(null)}
-                    className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold"
-                  >
-                    Back to Articles
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      )}
-
     </div>
   );
 };
+
+export default BlogPage;
