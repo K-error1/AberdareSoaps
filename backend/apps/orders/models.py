@@ -1,12 +1,15 @@
 import uuid
-import random
+import secrets
 from django.db import models
 from django.conf import settings
 from apps.core.models import TimeStampedUUIDModel
 
+_ALPHANUM = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'  # Excludes O, 0, I, 1 for clarity
+
 def generate_order_number():
-    """Generates customer-friendly tracking code like ABS-7421"""
-    return f"ABS-{random.randint(1000, 9999)}"
+    """Generates a collision-resistant tracking code like ABS-K7XM4Q2R (~1.6B combinations)."""
+    suffix = ''.join(secrets.choice(_ALPHANUM) for _ in range(8))
+    return f'ABS-{suffix}'
 
 class Order(TimeStampedUUIDModel):
     class Status(models.TextChoices):

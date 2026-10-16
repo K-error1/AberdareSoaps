@@ -9,7 +9,7 @@ from apps.orders.models import Order
 from apps.payments.models import Payment, WebhookEvent
 from .providers.daraja import DarajaPaymentProvider
 from .providers.paystack import PaystackPaymentProvider
-from .tasks import process_mpesa_callback_task, process_paystack_webhook_task
+from django_q.tasks import async_task
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class MpesaCallbackView(views.APIView):
 
         # Dispatch async task for processing
         try:
-            process_mpesa_callback_task(payload)
+            async_task('apps.payments.tasks.process_mpesa_callback_task', payload)
         except Exception as e:
             logger.error("Failed to enqueue mpesa callback task: %s", str(e))
 
@@ -164,7 +164,7 @@ class PaystackWebhookView(views.APIView):
         )
 
         try:
-            process_paystack_webhook_task(payload)
+            async_task('apps.payments.tasks.process_paystack_webhook_task', payload)
         except Exception as e:
             logger.error("Failed to enqueue paystack webhook task: %s", str(e))
 

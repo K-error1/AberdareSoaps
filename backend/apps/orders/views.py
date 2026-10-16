@@ -252,7 +252,8 @@ class AdminOrderListView(views.APIView):
     """
     Admin endpoint to list all orders from the database.
     """
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminRole]
+    pagination_class = None
 
     def get(self, request):
         queryset = Order.objects.all().prefetch_related('items', 'status_history').order_by('-created_at')
@@ -279,7 +280,7 @@ class AdminOrderStatusUpdateView(views.APIView):
     """
     Admin endpoint to update order status and log in status history.
     """
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdminRole]
 
     def patch(self, request, identifier):
         clean_id = identifier.strip().upper()

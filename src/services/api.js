@@ -85,9 +85,11 @@ export const api = {
   getUserOrders: () => request('/orders/user/my-orders/'),
   getOrder: (identifier) => request(`/orders/${identifier}/`),
   getOrderPaymentStatus: (identifier) => request(`/orders/${identifier}/payment-status/`),
-  getAdminOrders: (params = {}) => {
+  getAdminOrders: async (params = {}) => {
     const query = new URLSearchParams(params).toString();
-    return request(`/orders/admin/${query ? `?${query}` : ''}`);
+    const data = await request(`/orders/admin/${query ? `?${query}` : ''}`);
+    // Normalise: handle both paginated {results:[]} envelope and plain array
+    return Array.isArray(data) ? data : (data?.results ?? []);
   },
   updateOrderStatus: (identifier, status, notes = '') => {
     return request(`/orders/admin/${identifier}/status/`, {

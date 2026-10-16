@@ -35,58 +35,71 @@ export const OrdersPage = () => {
   const [customNote, setCustomNote] = useState('');
 
   const formatApiOrders = (rawList) => {
-    return rawList.map((o) => ({
-      id: o.order_number || o.id,
-      rawId: o.id,
-      customerName: o.customer_name || o.customerName || 'Guest Customer',
-      phone: o.customer_phone || o.phone || '',
-      email: o.customer_email || o.email || '',
-      statusCode: (o.status || 'pending').toLowerCase(),
-      status: o.status || 'PENDING',
-      paymentMethod: o.payment_method === 'MPESA' ? 'M-Pesa STK' : (o.payment_method === 'CARD' ? 'Card' : 'Cash on Delivery'),
-      paymentStatus: o.payment_status || 'PENDING',
-      mpesaRef: o.mpesa_receipt_number || o.mpesaRef || 'N/A',
-      deliveryOption: o.delivery_option || 'Standard Delivery',
-      deliveryAddress: [o.delivery_address || o.deliveryAddress, o.delivery_town, o.delivery_county].filter(Boolean).join(', ') || 'Nairobi',
-      total: o.total || 0,
-      subtotal: o.subtotal || 0,
-      deliveryFee: o.delivery_fee || 0,
-      discount: o.discount_amount || 0,
-      date: o.created_at ? new Date(o.created_at).toLocaleDateString('en-KE', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
-      items: (o.items || []).map((it) => ({
-        name: it.product_name_snapshot || it.name || 'Product',
-        size: it.size_label || it.size || 'Standard',
-        price: it.unit_price_snapshot || it.price || 0,
-        quantity: it.quantity || 1,
-        total: it.line_total || 0
-      })),
-      timeline: (o.status_history || []).map((h) => ({
-        fromStatus: h.from_status,
-        status: h.to_status,
-        note: h.notes || '',
-        date: h.created_at ? new Date(h.created_at).toLocaleString('en-KE', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''
-      }))
-    }));
+    return rawList.map((o) => {
+      // Serializer aliases: id=order_number, uuid=UUID, customerName, phone, email,
+      // deliveryAddress, paymentMethod, paymentStatus, mpesaRef.
+      // Non-aliased (snake_case): status, subtotal, discount_amount, delivery_fee,
+      // total, delivery_option, delivery_town, delivery_county, items, status_history, created_at.
+      const rawMethod = o.paymentMethod || o.payment_method || 'MPESA';
+      const paymentMethodLabel =
+        rawMethod === 'MPESA' ? 'M-Pesa STK'
+          : rawMethod === 'CARD' ? 'Card (Paystack)'
+          : 'Cash on Delivery';
+
+      return {
+        id: o.id || o.order_number,
+        uuid: o.uuid,
+        customerName: o.customerName || o.customer_name || 'Guest Customer',
+        phone: o.phone || o.customer_phone || '',
+        email: o.email || o.customer_email || '',
+        statusCode: (o.status || 'PENDING').toLowerCase(),
+        status: (o.status || 'PENDING').toUpperCase(),
+        paymentMethod: paymentMethodLabel,
+        paymentStatus: o.paymentStatus || o.payment_status || 'PENDING',
+        mpesaRef: o.mpesaRef || o.mpesa_receipt_number || '',
+        deliveryOption: o.delivery_option || 'nairobi',
+        deliveryAddress: [
+          o.deliveryAddress || o.delivery_address,
+          o.delivery_town,
+          o.delivery_county,
+        ].filter(Boolean).join(', ') || 'N/A',
+        total: o.total || 0,
+        subtotal: o.subtotal || 0,
+        deliveryFee: o.delivery_fee || 0,
+        discount: o.discount_amount || 0,
+        date: o.created_at
+          ? new Date(o.created_at).toLocaleDateString('en-KE', {
+              month: 'short', day: 'numeric', year: 'numeric',
+            })
+          : 'Recent',
+        items: (o.items || []).map((it) => ({
+          name: it.name || it.product_name_snapshot || 'Product',
+          size: it.size || it.size_label || 'Standard',
+          price: it.price || it.unit_price_snapshot || 0,
+          quantity: it.quantity || 1,
+          total: it.line_total || 0,
+        })),
+        timeline: (o.status_history || []).map((h) => ({
+          fromStatus: h.from_status,
+          status: h.to_status,
+          note: h.notes || '',
+          date: h.created_at
+            ? new Date(h.created_at).toLocaleString('en-KE', {
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+              })
+            : '',
+        })),
+      };
+    });
   };
 
   const loadOrders = async () => {
     setIsLoading(true);
     try {
       const data = await api.getAdminOrders();
-      if (Array.isArray(data)) {
-        setOrders(formatApiOrders(data));
-      }
+      setOrders(formatApiOrders(data));
     } catch (err) {
-      console.warn('API getAdminOrders fallback to localStorage:', err);
-      try {
-        const saved = localStorage.getItem('aberdares_orders');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) setOrders(parsed);
-        }
-      } catch (e) {
-        console.error(e);
-      }
+      console.error('Failed to fetch orders from backend:', err);
     } finally {
       setIsLoading(false);
     }
