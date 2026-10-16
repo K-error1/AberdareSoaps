@@ -48,28 +48,28 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 transition-all">
       {/* Top Announcement Bar */}
-      <div className="bg-aberdares-dark text-stone-200 text-xs py-1.5 sm:py-2 px-3 sm:px-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 text-[11px] sm:text-xs">
-          <div className="flex items-center gap-1.5 truncate">
+      <div className="bg-aberdares-dark text-stone-200 text-xs py-1.5 sm:py-2 px-3 sm:px-4 w-full overflow-hidden">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 text-[10px] sm:text-xs min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 truncate">
             <span className="bg-aberdares-emerald/80 text-white font-bold px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] tracking-wider uppercase flex-shrink-0">
               Factory Direct
             </span>
-            <span className="truncate">Ruiru, Kimbo – Matangi Rd</span>
+            <span className="truncate hidden sm:inline">Ruiru, Kimbo – Matangi Rd</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 text-[10px] sm:text-xs">
             <span className="hidden md:inline-flex items-center gap-1 text-emerald-300">
               <Truck size={13} /> Free delivery over KSh 3,000
             </span>
             <button
               onClick={() => setIsTrackingOpen(true)}
-              className="hover:text-white underline underline-offset-2 flex items-center gap-1 transition-colors text-[11px] sm:text-xs"
+              className="hover:text-white underline underline-offset-2 flex items-center gap-1 transition-colors whitespace-nowrap"
             >
               Track Order
             </button>
-            <span className="text-stone-500">|</span>
+            <span className="text-stone-500 hidden sm:inline">|</span>
             <a 
               href="tel:+254712792555" 
-              className="flex items-center gap-1 hover:text-white transition-colors text-[11px] sm:text-xs font-semibold"
+              className="hidden sm:flex items-center gap-1 hover:text-white transition-colors font-semibold whitespace-nowrap"
             >
               <Phone size={11} /> 0712 792 555
             </a>
@@ -136,14 +136,14 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
           </div>
 
           {/* Header Action Tools (Right) */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             {/* Mobile Search Toggle */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className="p-2 text-stone-600 hover:text-aberdares-forest md:hidden"
+              className="p-1.5 text-stone-600 hover:text-aberdares-forest md:hidden"
               aria-label="Search"
             >
-              <Search size={20} />
+              <Search size={18} />
             </button>
 
             {/* Track Order Quick Link (Desktop) */}
@@ -157,12 +157,12 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
 
             {/* User Account / Login Button */}
             {isAuthenticated ? (
-              <div className="flex items-center gap-1.5 bg-stone-100 py-1 px-2.5 rounded-xl text-xs">
+              <div className="flex items-center gap-1 bg-stone-100 py-1 px-1.5 sm:px-2.5 rounded-xl text-xs">
                 <button
                   onClick={() => handleNavClick('account')}
-                  className="flex items-center gap-1.5 hover:text-aberdares-forest transition-colors"
+                  className="flex items-center gap-1 hover:text-aberdares-forest transition-colors"
                 >
-                  <div className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[9px] sm:text-[10px]">
                     {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <span className="font-semibold text-slate-800 hidden sm:inline max-w-[90px] truncate">
@@ -172,7 +172,7 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
                 <button
                   onClick={logout}
                   title="Logout"
-                  className="text-stone-400 hover:text-rose-600 p-1 ml-1 transition-colors"
+                  className="hidden sm:inline-block text-stone-400 hover:text-rose-600 p-1 ml-1 transition-colors"
                 >
                   <LogOut size={13} />
                 </button>
@@ -180,7 +180,7 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
             ) : (
               <button
                 onClick={() => handleNavClick('account')}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 hover:text-aberdares-forest hover:bg-stone-100 rounded-xl transition-colors"
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-bold text-slate-700 hover:text-aberdares-forest hover:bg-stone-100 rounded-xl transition-colors"
               >
                 <User size={16} />
                 <span className="hidden sm:inline">Sign In</span>
@@ -190,13 +190,13 @@ export const Navbar = ({ activePage, setActivePage, onSearchChange, searchQuery 
             {/* Shopping Cart Button */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 text-aberdares-forest transition-colors group"
+              className="relative flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100/80 text-aberdares-forest transition-colors group"
               aria-label="View Shopping Cart"
             >
-              <ShoppingBag size={20} className="group-hover:scale-110 transition-transform" />
+              <ShoppingBag size={18} className="group-hover:scale-110 transition-transform sm:w-5 sm:h-5" />
               <span className="hidden sm:inline text-xs font-bold">Cart</span>
               {totalItemsCount > 0 && (
-                <span className="bg-aberdares-coral text-white text-[11px] font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md animate-pulse">
+                <span className="bg-aberdares-coral text-white text-[10px] font-bold rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center shadow-md animate-pulse">
                   {totalItemsCount}
                 </span>
               )}

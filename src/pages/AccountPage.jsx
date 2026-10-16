@@ -215,23 +215,37 @@ export const AccountPage = ({ setActivePage, previousPage = 'home' }) => {
               <span className="font-semibold text-emerald-700">Verified Customer</span>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => {
-                  if (setActivePage) setActivePage('products');
-                }}
-                className="flex-1 py-3 px-4 bg-aberdares-forest hover:bg-aberdares-dark text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                <span>Continue Shopping</span>
-                <ArrowRight size={14} />
-              </button>
-              <button
-                onClick={logout}
-                className="py-3 px-6 bg-white border border-stone-200 hover:bg-rose-50 hover:text-rose-600 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
-              >
-                <LogOut size={14} />
-                <span>Sign Out</span>
-              </button>
+            <div className="pt-2 flex flex-col gap-2.5">
+              {(user?.role === 'ADMIN' || user?.is_staff || user?.is_superuser) && (
+                <button
+                  onClick={() => {
+                    if (setActivePage) setActivePage('admin');
+                  }}
+                  className="w-full py-3 px-4 bg-stone-900 hover:bg-black text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <ShieldCheck size={16} className="text-emerald-400" />
+                  <span>Open Admin Back-Office & Orders</span>
+                </button>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={() => {
+                    if (setActivePage) setActivePage('products');
+                  }}
+                  className="flex-1 py-3 px-4 bg-aberdares-forest hover:bg-aberdares-dark text-white rounded-xl font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Continue Shopping</span>
+                  <ArrowRight size={14} />
+                </button>
+                <button
+                  onClick={logout}
+                  className="py-3 px-6 bg-white border border-stone-200 hover:bg-rose-50 hover:text-rose-600 rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <LogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

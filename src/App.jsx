@@ -115,7 +115,7 @@ export function App() {
   return (
     <AuthProvider>
       <CartProvider>
-        <div className={`min-h-screen flex flex-col bg-[#FAF8F5] text-slate-800 selection:bg-aberdares-forest selection:text-white ${activePage !== 'account' && activePage !== 'admin' ? 'pb-16 lg:pb-0' : ''}`}>
+        <div className={`min-h-screen flex flex-col bg-[#FAF8F5] text-slate-800 selection:bg-aberdares-forest selection:text-white w-full max-w-full overflow-x-hidden ${activePage !== 'account' && activePage !== 'admin' ? 'pb-16 lg:pb-0' : ''}`}>
         
         {/* Navigation (Hidden on Account and Admin Pages) */}
         {activePage !== 'account' && activePage !== 'admin' && (

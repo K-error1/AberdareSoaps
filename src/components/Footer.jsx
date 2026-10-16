@@ -131,6 +131,11 @@ export const Footer = ({ setActivePage, onCategorySelect }) => {
                   Track Your Order &rarr;
                 </button>
               </li>
+              <li>
+                <button onClick={() => handlePageClick('admin')} className="text-stone-400 hover:text-white">
+                  Admin Portal
+                </button>
+              </li>
             </ul>
           </div>
 

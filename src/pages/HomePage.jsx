@@ -77,10 +77,10 @@ export const HomePage = ({ setActivePage, onCategorySelect }) => {
     <div className="space-y-16 sm:space-y-24 pb-16">
       
       {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-emerald-950 via-aberdares-dark to-stone-900 text-white pt-12 sm:pt-20 pb-20 sm:pb-32">
+      <section className="relative overflow-hidden w-full max-w-full bg-gradient-to-b from-emerald-950 via-aberdares-dark to-stone-900 text-white pt-12 sm:pt-20 pb-20 sm:pb-32">
         {/* Background botanical accents */}
-        <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 w-96 h-96 rounded-full bg-aberdares-forest/20 blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-0 -translate-y-12 translate-x-12 w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 translate-y-12 -translate-x-12 w-64 sm:w-96 h-64 sm:h-96 rounded-full bg-aberdares-forest/20 blur-3xl pointer-events-none" />
         
         {/* Subtle grid pattern */}
         <div className="absolute inset-0 bg-[radial-gradient(#2e7d56_1px,transparent_1px)] [background-size:24px_24px] opacity-15" />
